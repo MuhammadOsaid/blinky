@@ -32,6 +32,12 @@ pipeline {
             }
         }
         
+        stage('Memory Checks'){
+            steps {
+            
+                sh "valgrind --leak-check=yes make build"
+            }
+        }
         
         stage('FlashBoard') {
             steps {
