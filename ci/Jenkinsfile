@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+
+    stages {
+        
+        stage('Checkout') {
+            steps {
+                
+                script {
+                    git branch: 'main',
+                        credentialsId: 'UpdateCredID',
+                        url: 'https://github.com/MuhammadOsaid/blinky.git'
+                }
+            }
+        }
+        
+        
+        stage('Compile') {
+            steps {
+                echo 'Running Clean...'
+                sh 'make clean'
+                
+                echo 'Building'
+                sh 'make build'
+            }
+        }
+        
+        stage('Static Analysis') {
+            steps {
+                echo 'Executing Static Analysis (Cppcheck)...'
+                sh 'cppcheck --enable=all *.c'
+            }
+        }
+        
+        
+        stage('FlashBoard') {
+            steps {
+                echo 'Programming on STM32F3 Discovery board...'
+                sh 'make program'
+            }
+        }
+    }
+}
+
