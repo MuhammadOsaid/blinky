@@ -1,10 +1,52 @@
 
+/*
+•LD1 PWR: Red LED indicates that the board is powered.
+•LD2 COM: LD2 default status is red. LD2 turns to green to indicate that
+communications are in progress between the PC and the ST-LINK/V2.
+•User LD3: Red LED is a user LED connected to the I/O PE9 of the STM32F303VCT6.
+•User LD4: Blue LED is a user LED connected to the I/O PE8 of the STM32F303VCT6.
+•User LD5: Orange LED is a user LED connected to the I/O PE10 of the
+STM32F303VCT6.
+•User LD6: Green LED is a user LED connected to the I/O PE15 of the
+STM32F303VCT6.
+•User LD7: Green LED is a user LED connected to the I/O PE11 of the
+STM32F303VCT6.
+•User LD8: Orange LED is a user LED connected to the I/O PE14 of the
+STM32F303VCT6.
+•User LD9: Blue LED is a user LED connected to the I/O PE12 of the STM32F303VCT6.
+•User LD10: Red LED is a user LED connected to the I/O PE13 of the
+STM32F303VCT6.
+*/
+
+
 #include <stdint.h>
 #include <stdbool.h>
 
 #include <stm32f30x.h>
 
 extern void delay_us(uint32_t us);
+
+#define BLINK_VERY_FAST 25000
+#define BLINK_FAST 250000
+#define BLINK_SLOW 500000
+
+#define DELAY BLINK_FAST 
+
+
+typedef enum ERROR_E
+{
+	E_NOT_OK,
+	E_OK = 0
+
+} ERROR_T;
+
+
+typedef enum LED_STATUS_E
+{
+	LED_OFF= 0,
+	LED_ON = 1
+
+} LED_STATUS_T;
 
 /**
  * Stub required by newlibc.
@@ -32,8 +74,7 @@ _init(void)
  * Uses the external 8 MHz clock from the ST-Link to generate the
  * 72 MHz system clock.
  */
-void
-init_clock()
+ERROR_T init_clock()
 {
 	// use external 8MHz clock from ST-LINK
 	RCC->CR |= RCC_CR_HSEBYP | RCC_CR_HSEON;
@@ -45,7 +86,7 @@ init_clock()
 	
 	if (!(RCC->CR & RCC_CR_HSERDY)) {
 		// no external clock found => abort
-		return;
+		return E_NOT_OK;
 	}
 	
 	uint32_t tmp = 0;
@@ -66,9 +107,10 @@ init_clock()
 	RCC->CR |= RCC_CR_PLLON;	
 
 	// Wait until the PLL is stable
-	while (!(RCC->CR & RCC_CR_PLLRDY)) {
+	while (!(RCC->CR & RCC_CR_PLLRDY)) 
+	{
 		if (!(--t)) {
-			return false;
+			return E_NOT_OK;
 		}
 	}
 	
@@ -82,9 +124,12 @@ init_clock()
 	              0x0000ffff);
 
 	// Wait till the main PLL is used as system clock source
-	while ((RCC->CFGR & (uint32_t) RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
+	while ((RCC->CFGR & (uint32_t) RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL)
 	{
+		/* Do nothing */
 	}
+
+	return E_OK;
 }
 
 int
@@ -94,19 +139,27 @@ main (void)
 	
 	// Struct of PIO Port E
 	GPIO_TypeDef *PE = GPIOE;
-	
+
 	// Red LED is PE9
 	// set mode to 01 -> output
 	PE->MODER = (1 << (9*2));
 
+	// Orange LED is PE10
+	// set mode to 01 -> output
+	PE->MODER |= (1 << (10*2));
+
+
 	// switch LED on (is connected between IO and GND)
 	PE->ODR = (1 << 9);
+	PE->ODR |= (1 << 10);
 	
 	while(1) {
-		PE->ODR = (1 << 9);
-		delay_us(500000);
-		PE->ODR = (0 << 9);
-		delay_us(500000);
+		PE->ODR = (LED_ON << 9);
+		PE->ODR |= (LED_OFF << 10);
+		delay_us(DELAY);
+		PE->ODR = (LED_OFF << 9);
+		PE->ODR |= (LED_ON << 10);
+		delay_us(DELAY);
 	}
 }
 
