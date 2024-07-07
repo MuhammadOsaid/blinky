@@ -1,4 +1,7 @@
 
+# Include
+INC=-I./inc
+
 # C Flags
 CFLAGS = -std=c99
 
@@ -35,9 +38,9 @@ CCFLAGS   += -ffunction-sections -fdata-sections
 LINKFLAGS += -Wl,--relax -Wl,--gc-sections
 
 build: clean
-	arm-none-eabi-gcc $(CFLAGS) $(CCFLAGS) -c -o delay.o   delay.sx
-	arm-none-eabi-gcc $(CFLAGS) $(CCFLAGS) -c -o main.o    main.c
-	arm-none-eabi-gcc $(CFLAGS) $(CCFLAGS) -c -o startup.o startup.c   
+	arm-none-eabi-gcc $(CFLAGS) $(CCFLAGS) $(INC) -c -o delay.o   delay.sx
+	arm-none-eabi-gcc $(CFLAGS) $(CCFLAGS) $(INC) -c -o main.o    main.c
+	arm-none-eabi-gcc $(CFLAGS) $(CCFLAGS) $(INC) -c -o startup.o startup.c   
 	
 	arm-none-eabi-gcc $(LINKFLAGS) -o main.elf main.o delay.o startup.o
 
